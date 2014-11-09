@@ -51,7 +51,7 @@ var cornerstoneTools = (function ($, cornerstone, cornerstoneTools) {
     }
 
     function showProgress(event, data){
-
+        
         if (!event.data.element){
             console.error('No element is available for this event.');
             return false;
@@ -69,7 +69,10 @@ var cornerstoneTools = (function ($, cornerstone, cornerstoneTools) {
         if (stackData){
             currentImage = stackData.imageIds[stackData.currentImageIdIndex];
         } else {
-            currentImage = cornerstone.getEnabledElement(event.data.element).loadingImageId;
+            if (!instances || instances.length !== 1){
+                console.error('For non-stack elements, must provide a single instance object');
+            }
+            currentImage = instances[0].url;
         }
 
         if (!currentImage){
