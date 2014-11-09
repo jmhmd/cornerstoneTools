@@ -1,4 +1,4 @@
-/*! cornerstoneTools - v0.4.3 - 2014-11-05 | (c) 2014 Chris Hafey | https://github.com/chafey/cornerstoneTools */
+/*! cornerstoneTools - v0.4.3 - 2014-11-09 | (c) 2014 Chris Hafey | https://github.com/chafey/cornerstoneTools */
 // Begin Source: src/inputSources/mouseWheelInput.js
 var cornerstoneTools = (function ($, cornerstone, cornerstoneTools) {
 
@@ -2612,12 +2612,13 @@ var cornerstoneTools = (function ($, cornerstone, cornerstoneTools) {
 
     var scrollBarHeight = 6;
 
-    function updateImage(e, eventData){
+    function updateImage(event, eventData){
 
-        var context = eventData.enabledElement.canvas.getContext("2d");
+        var enabledElement = cornerstone.getEnabledElement(event.data.element);
+        var context = enabledElement.canvas.getContext("2d");
 
-        var width = eventData.enabledElement.canvas.width;
-        var height = eventData.enabledElement.canvas.height;
+        var width = enabledElement.canvas.width;
+        var height = enabledElement.canvas.height;
 
         // draw progress indicator background
         if (width > 0 && height > 0){
@@ -2628,13 +2629,13 @@ var cornerstoneTools = (function ($, cornerstone, cornerstoneTools) {
 
         // get current image index
         
-        var stackData = cornerstoneTools.getToolState(eventData.element, 'stack');
+        var stackData = cornerstoneTools.getToolState(event.data.element, 'stack');
         stackData = stackData && stackData.data[0];
 
         var imageScrollIndex = stackData && stackData.currentImageIdIndex;
         var totalImages = stackData && stackData.imageIds.length;
 
-        var prefetchData = cornerstoneTools.getToolState(eventData.element, 'stackPrefetch');
+        var prefetchData = cornerstoneTools.getToolState(event.data.element, 'stackPrefetch');
         var imageLoadedIndex = prefetchData && prefetchData.data && prefetchData.data[0] && prefetchData.data[0].prefetchImageIdIndex;
 
         // draw loaded images indicator
@@ -2659,7 +2660,7 @@ var cornerstoneTools = (function ($, cornerstone, cornerstoneTools) {
         var instances = event.data.instances;
         var enabledElement = cornerstone.getEnabledElement(event.data.element);
 
-        var file = data.fileURL.substring(data.fileURL.indexOf('://'));
+        var file = data.imageId.substring(data.imageId.indexOf('://'));
         var stackData = cornerstoneTools.getToolState(event.data.element, 'stack');
         stackData = stackData && stackData.data[0];
 
@@ -2753,11 +2754,11 @@ var cornerstoneTools = (function ($, cornerstone, cornerstoneTools) {
 
     function activateScrollIndicator(element) {
 
-        $(element).off("CornerstoneImageRendered", updateImage);
-        $(element).off("CornerstoneImageLoaded", updateImage);
+        $(element).off("CornerstoneImageRendered", {element: element}, updateImage);
+        $(cornerstone).off("CornerstoneImageLoaded", {element: element}, updateImage);
 
-        $(element).on("CornerstoneImageRendered", updateImage);
-        $(element).on("CornerstoneImageLoaded", updateImage);
+        $(element).on("CornerstoneImageRendered", {element: element}, updateImage);
+        $(cornerstone).on("CornerstoneImageLoaded", {element: element}, updateImage);
     }
 
     /**
@@ -2771,9 +2772,9 @@ var cornerstoneTools = (function ($, cornerstone, cornerstoneTools) {
      */
     function activateLoadingIndicator(element, instances) {
 
-        $(document).off("CornerstoneImageLoadProgress", {element: element, instances: instances}, showProgress);
+        $(cornerstone).off("CornerstoneImageLoadProgress", {element: element, instances: instances}, showProgress);
 
-        $(document).on("CornerstoneImageLoadProgress", {element: element, instances: instances}, showProgress);
+        $(cornerstone).on("CornerstoneImageLoadProgress", {element: element, instances: instances}, showProgress);
 
     }
 
