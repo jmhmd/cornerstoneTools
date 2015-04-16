@@ -1,4 +1,4 @@
-/*! cornerstoneTools - v0.6.0 - 2015-04-03 | (c) 2014 Chris Hafey | https://github.com/chafey/cornerstoneTools */
+/*! cornerstoneTools - v0.6.0 - 2015-04-16 | (c) 2014 Chris Hafey | https://github.com/chafey/cornerstoneTools */
 // Begin Source: src/inputSources/mouseWheelInput.js
 var cornerstoneTools = (function ($, cornerstone, cornerstoneTools) {
 
@@ -3613,15 +3613,26 @@ var cornerstoneTools = (function ($, cornerstone, cornerstoneTools) {
         context.fillRect(xPos, height - scrollBarHeight, markerWidth, scrollBarHeight);
     }
 
-    function activateScrollIndicator(element) {
+    function deactivateScrollIndicator(element) {
 
         $(element).off("CornerstoneImageRendered", updateImage);
         $(element).off("CornerstoneImageLoaded", updateImage);
+    }
+
+    function activateScrollIndicator(element) {
+
+        /*$(element).off("CornerstoneImageRendered", updateImage);
+        $(element).off("CornerstoneImageLoaded", updateImage);*/
+        deactivateScrollIndicator(element);
 
         $(element).on("CornerstoneImageRendered", updateImage);
         $(element).on("CornerstoneImageLoaded", updateImage);
     }
 
+    function deactivateLoadingIndicator(element, instances) {
+
+        $(document).off("CornerstoneImageLoadProgress", {element: element, instances: instances}, showProgress);
+    }
     /**
      * Activate image download indicator for the element
      * @param  {Object} element   DOM element
@@ -3633,18 +3644,20 @@ var cornerstoneTools = (function ($, cornerstone, cornerstoneTools) {
      */
     function activateLoadingIndicator(element, instances) {
 
-        $(document).off("CornerstoneImageLoadProgress", {element: element, instances: instances}, showProgress);
+        deactivateLoadingIndicator(element, instances);
 
         $(document).on("CornerstoneImageLoadProgress", {element: element, instances: instances}, showProgress);
 
     }
 
     cornerstoneTools.scrollIndicator = {
-        activate: activateScrollIndicator
+        activate: activateScrollIndicator,
+        deactivate: deactivateScrollIndicator
     };
 
     cornerstoneTools.loadingIndicator = {
-        activate: activateLoadingIndicator
+        activate: activateLoadingIndicator,
+        deactivate: deactivateLoadingIndicator
     };
 
     return cornerstoneTools;
@@ -5195,6 +5208,10 @@ var cornerstoneTools = (function ($, cornerstone, cornerstoneTools) {
 
         var targetInstance = parseInt(instance, 10) - 1; // use 0 indexed numbering
 
+        var ee = cornerstone.getEnabledElement(element);
+        if (ee.image){
+            currentImageIdIndex = stackData.imageIds.indexOf(ee.image.imageId);
+        }
         if (targetInstance === parseInt(currentImageIdIndex, 10)){
             return false;
         }

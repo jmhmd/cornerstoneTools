@@ -151,15 +151,26 @@ var cornerstoneTools = (function ($, cornerstone, cornerstoneTools) {
         context.fillRect(xPos, height - scrollBarHeight, markerWidth, scrollBarHeight);
     }
 
-    function activateScrollIndicator(element) {
+    function deactivateScrollIndicator(element) {
 
         $(element).off("CornerstoneImageRendered", updateImage);
         $(element).off("CornerstoneImageLoaded", updateImage);
+    }
+
+    function activateScrollIndicator(element) {
+
+        /*$(element).off("CornerstoneImageRendered", updateImage);
+        $(element).off("CornerstoneImageLoaded", updateImage);*/
+        deactivateScrollIndicator(element);
 
         $(element).on("CornerstoneImageRendered", updateImage);
         $(element).on("CornerstoneImageLoaded", updateImage);
     }
 
+    function deactivateLoadingIndicator(element, instances) {
+
+        $(document).off("CornerstoneImageLoadProgress", {element: element, instances: instances}, showProgress);
+    }
     /**
      * Activate image download indicator for the element
      * @param  {Object} element   DOM element
@@ -171,18 +182,20 @@ var cornerstoneTools = (function ($, cornerstone, cornerstoneTools) {
      */
     function activateLoadingIndicator(element, instances) {
 
-        $(document).off("CornerstoneImageLoadProgress", {element: element, instances: instances}, showProgress);
+        deactivateLoadingIndicator(element, instances);
 
         $(document).on("CornerstoneImageLoadProgress", {element: element, instances: instances}, showProgress);
 
     }
 
     cornerstoneTools.scrollIndicator = {
-        activate: activateScrollIndicator
+        activate: activateScrollIndicator,
+        deactivate: deactivateScrollIndicator
     };
 
     cornerstoneTools.loadingIndicator = {
-        activate: activateLoadingIndicator
+        activate: activateLoadingIndicator,
+        deactivate: deactivateLoadingIndicator
     };
 
     return cornerstoneTools;

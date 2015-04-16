@@ -46,6 +46,10 @@ var cornerstoneTools = (function ($, cornerstone, cornerstoneTools) {
 
         var targetInstance = parseInt(instance, 10) - 1; // use 0 indexed numbering
 
+        var ee = cornerstone.getEnabledElement(element);
+        if (ee.image){
+            currentImageIdIndex = stackData.imageIds.indexOf(ee.image.imageId);
+        }
         if (targetInstance === parseInt(currentImageIdIndex, 10)){
             return false;
         }
