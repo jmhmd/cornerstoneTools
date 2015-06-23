@@ -2,21 +2,20 @@ var cornerstoneTools = (function ($, cornerstone, cornerstoneTools) {
 
     "use strict";
 
-    if(cornerstoneTools === undefined) {
+    if (cornerstoneTools === undefined) {
         cornerstoneTools = {};
     }
-    if(cornerstoneTools.referenceLines === undefined) {
+    if (cornerstoneTools.referenceLines === undefined) {
         cornerstoneTools.referenceLines = {};
     }
 
     // renders the active reference line
-    function renderActiveReferenceLine(context, eventData, targetElement, referenceElement)
-    {
+    function renderActiveReferenceLine(context, eventData, targetElement, referenceElement) {
         var targetImage = cornerstone.getEnabledElement(targetElement).image;
         var referenceImage = cornerstone.getEnabledElement(referenceElement).image;
 
         // make sure the images are actually loaded for the target and reference
-        if(targetImage === undefined || referenceImage === undefined) {
+        if (targetImage === undefined || referenceImage === undefined) {
             return;
         }
 
@@ -29,7 +28,7 @@ var cornerstoneTools = (function ($, cornerstone, cornerstoneTools) {
         }
 
         // the image planes must be in the same frame of reference
-        if(targetImagePlane.frameOfReferenceUID != referenceImagePlane.frameOfReferenceUID) {
+        if (targetImagePlane.frameOfReferenceUID != referenceImagePlane.frameOfReferenceUID) {
             return;
         }
 
@@ -37,22 +36,31 @@ var cornerstoneTools = (function ($, cornerstone, cornerstoneTools) {
         var targetNormal = targetImagePlane.rowCosines.clone().cross(targetImagePlane.columnCosines);
         var referenceNormal = referenceImagePlane.rowCosines.clone().cross(referenceImagePlane.columnCosines);
         var angleInRadians = targetNormal.angleTo(referenceNormal);
+
         angleInRadians = Math.abs(angleInRadians);
-        if(angleInRadians < 0.5) { // 0.5 radians = ~30 degrees
+        if (angleInRadians < 0.5) { // 0.5 radians = ~30 degrees
             return;
         }
 
         var referenceLine = cornerstoneTools.referenceLines.calculateReferenceLine(targetImagePlane, referenceImagePlane);
 
-        var color=cornerstoneTools.activeToolcoordinate.getActiveColor();
+        var refLineStartCanvas = cornerstone.pixelToCanvas(eventData.element, referenceLine.start);
+        var refLineEndCanvas = cornerstone.pixelToCanvas(eventData.element, referenceLine.end);
+
+        var color = cornerstoneTools.toolColors.getActiveColor();
+        var lineWidth = cornerstoneTools.toolStyle.getToolWidth();
 
         // draw the referenceLines
+        context.setTransform(1,0,0,1,0,0);
+
+        context.save();
         context.beginPath();
         context.strokeStyle = color;
-        context.lineWidth = 1 / eventData.viewport.scale;
-        context.moveTo(referenceLine.start.x, referenceLine.start.y);
-        context.lineTo(referenceLine.end.x, referenceLine.end.y);
+        context.lineWidth = lineWidth;
+        context.moveTo(refLineStartCanvas.x, refLineStartCanvas.y);
+        context.lineTo(refLineEndCanvas.x, refLineEndCanvas.y);
         context.stroke();
+        context.restore();
     }
 
     // module/private exports

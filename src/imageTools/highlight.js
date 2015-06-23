@@ -11,9 +11,15 @@ var cornerstoneTools = (function ($, cornerstone, cornerstoneMath, cornerstoneTo
     ///////// BEGIN ACTIVE TOOL ///////
     function createNewMeasurement(mouseEventData)
     {
+        //if already a highlight measurement, creating a new one will be useless
+        var existingToolData = cornerstoneTools.getToolState(mouseEventData.event.currentTarget, toolType);
+        if (existingToolData && existingToolData.data && existingToolData.data.length > 0)
+            return;
+    
         // create the measurement data for this tool with the end handle activated
         var measurementData = {
             visible : true,
+            active: true,
             handles : {
                 start : {
                     x : mouseEventData.currentPoints.image.x,
@@ -76,34 +82,41 @@ var cornerstoneTools = (function ($, cornerstone, cornerstoneMath, cornerstoneTo
 
         // we have tool data for this elemen
         var context = eventData.canvasContext.canvas.getContext("2d");
-        cornerstone.setToPixelCoordinateSystem(eventData.enabledElement, context);
+        context.setTransform(1,0,0,1,0,0);
 
-        //activation color 
-        var color=cornerstoneTools.activeToolcoordinate.getToolColor();
+        var color;
+        var lineWidth = cornerstoneTools.toolStyle.getToolWidth();
 
         context.save();
+
         var data = toolData.data[0];
-        
-        var selectionColor="white",
-            toolsColor="white";
 
-        //differentiate the color of activation tool
+        if (!data) {
+            return;
+        }
+
+        if (data.active) {
+            color = cornerstoneTools.toolColors.getActiveColor();
+        } else {
+            color = cornerstoneTools.toolColors.getToolColor();
+        }
+
+        var handleStartCanvas = cornerstone.pixelToCanvas(eventData.element, data.handles.start);
+        var handleEndCanvas = cornerstone.pixelToCanvas(eventData.element, data.handles.end);
+
         var rect = {
-            left : Math.min(data.handles.start.x, data.handles.end.x),
-            top : Math.min(data.handles.start.y, data.handles.end.y),
-            width : Math.abs(data.handles.start.x - data.handles.end.x),
-            height : Math.abs(data.handles.start.y - data.handles.end.y)
+            left : Math.min(handleStartCanvas.x, handleEndCanvas.x),
+            top : Math.min(handleStartCanvas.y, handleEndCanvas.y),
+            width : Math.abs(handleStartCanvas.x - handleEndCanvas.x),
+            height : Math.abs(handleStartCanvas.y - handleEndCanvas.y)
         };
-
-        // draw the handles
-        context.beginPath();
-        cornerstoneTools.drawHandles(context, eventData, data.handles, color);
-        context.stroke();
 
         // draw dark fill outside the rectangle
         context.beginPath();
         context.strokeStyle = "transparent";
+
         context.rect(0, 0, context.canvas.clientWidth, context.canvas.clientHeight);
+
         context.rect(rect.width + rect.left, rect.top, -rect.width, rect.height);
         context.stroke();
         context.fillStyle = "rgba(0,0,0,0.7)";
@@ -113,9 +126,15 @@ var cornerstoneTools = (function ($, cornerstone, cornerstoneMath, cornerstoneTo
         // draw dashed stroke rectangle
         context.beginPath();
         context.strokeStyle = color;
-        context.lineWidth = 2.5 / eventData.viewport.scale;
+        context.lineWidth = lineWidth;
         context.setLineDash([4]);
         context.strokeRect(rect.left, rect.top, rect.width, rect.height);
+
+        // Strange fix, but restore doesn't seem to reset the line dashes?
+        context.setLineDash([]);
+        
+        // draw the handles last, so they will be on top of the overlay
+        cornerstoneTools.drawHandles(context, eventData, data.handles, color);
         context.restore();
     }
     ///////// END IMAGE RENDERING ///////

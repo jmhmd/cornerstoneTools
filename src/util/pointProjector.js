@@ -15,6 +15,7 @@ var cornerstoneTools = (function ($, cornerstone, cornerstoneTools) {
         var point = patientPoint.clone().sub(imagePlane.imagePositionPatient);
         var x = imagePlane.rowCosines.dot(point) / imagePlane.rowPixelSpacing;
         var y = imagePlane.columnCosines.dot(point) / imagePlane.columnPixelSpacing;
+
         var imagePoint = {x: x, y: y};
         return imagePoint;
     }
@@ -26,6 +27,7 @@ var cornerstoneTools = (function ($, cornerstone, cornerstoneTools) {
         y.multiplyScalar(imagePlane.columnPixelSpacing);
         var x = imagePlane.rowCosines.clone().multiplyScalar(imagePoint.x);
         x.multiplyScalar(imagePlane.rowPixelSpacing);
+
         var patientPoint = x.add(y);
         patientPoint.add(imagePlane.imagePositionPatient);
         return patientPoint;

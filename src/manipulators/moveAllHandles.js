@@ -7,46 +7,40 @@ var cornerstoneTools = (function ($, cornerstone, cornerstoneMath, cornerstoneTo
     }
 
 
-
-    function moveAllHandles(e, data, toolData, deleteIfHandleOutsideImage, preventHandleOutsideImage)
-    {
+    function moveAllHandles(e, data, toolData, deleteIfHandleOutsideImage, preventHandleOutsideImage) {
         var mouseEventData = e;
         var element = mouseEventData.element;
 
-        function mouseDragCallback(e, eventData)
-        {
+        function mouseDragCallback(e, eventData) {
+            data.active = true;
+
             for(var property in data.handles) {
                 var handle = data.handles[property];
                 handle.x += eventData.deltaPoints.image.x;
                 handle.y += eventData.deltaPoints.image.y;
-                if (preventHandleOutsideImage)
-                {
-                    if (handle.x < 0)
-                    {
+                if (preventHandleOutsideImage) {
+                    if (handle.x < 0) {
                         handle.x = 0;
                     }
-                    if (handle.x > eventData.image.width)
-                    {
+                    if (handle.x > eventData.image.width) {
                         handle.x = eventData.image.width;
                     }
-                    if (handle.y < 0)
-                    {
+                    if (handle.y < 0) {
                         handle.y = 0;
                     }
-                    if (handle.y > eventData.image.height)
-                    {
+                    if (handle.y > eventData.image.height) {
                         handle.y = eventData.image.height;
                     }
                 }
             }
             cornerstone.updateImage(element);
-            return false; // false = cases jquery to preventDefault() and stopPropagation() this event
+            return false; // false = causes jquery to preventDefault() and stopPropagation() this event
         }
 
         $(element).on("CornerstoneToolsMouseDrag", mouseDragCallback);
 
         function mouseUpCallback(e, eventData) {
-            data.moving = false;
+            data.active = false;
 
             $(element).off('CornerstoneToolsMouseDrag', mouseDragCallback);
             $(element).off('CornerstoneToolsMouseUp', mouseUpCallback);
@@ -64,19 +58,17 @@ var cornerstoneTools = (function ($, cornerstone, cornerstoneMath, cornerstoneTo
                 };
                 for(var property in data.handles) {
                     var handle = data.handles[property];
-                    if(cornerstoneMath.point.insideRect(handle, rect) === false)
-                    {
+                    handle.active = false;
+                    if(cornerstoneMath.point.insideRect(handle, rect) === false) {
                         handleOutsideImage = true;
                     }
                 }
 
-                if(handleOutsideImage)
-                {
+                if(handleOutsideImage) {
                     // find this tool data
                     var indexOfData = -1;
                     for(var i = 0; i < toolData.data.length; i++) {
-                        if(toolData.data[i] === data)
-                        {
+                        if (toolData.data[i] === data) {
                             indexOfData = i;
                         }
                     }
@@ -86,11 +78,10 @@ var cornerstoneTools = (function ($, cornerstone, cornerstoneMath, cornerstoneTo
                 }
             }
             cornerstone.updateImage(element);
-         }
-        $(element).on("CornerstoneToolsMouseUp",mouseUpCallback);
+        }
+        $(element).on("CornerstoneToolsMouseUp", mouseUpCallback);
         return true;
     }
-
 
     // module/private exports
     cornerstoneTools.moveAllHandles = moveAllHandles;
