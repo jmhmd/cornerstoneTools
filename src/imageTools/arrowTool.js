@@ -14,6 +14,7 @@ var cornerstoneTools = (function ($, cornerstone, cornerstoneMath, cornerstoneTo
         // create the measurement data for this tool with the end handle activated
         var measurementData = {
             visible : true,
+            active: true,
             handles : {
                 start : {
                     x : mouseEventData.currentPoints.image.x,
@@ -73,28 +74,35 @@ var cornerstoneTools = (function ($, cornerstone, cornerstoneMath, cornerstoneTo
 
         // we have tool data for this element - iterate over each one and draw it
         var context = eventData.canvasContext.canvas.getContext("2d");
-        cornerstone.setToPixelCoordinateSystem(eventData.enabledElement, context);
+        context.setTransform(1, 0, 0, 1, 0, 0);
         
-        var color=cornerstoneTools.activeToolcoordinate.getToolColor();
+        var color;
         
         for(var i=0; i < toolData.data.length; i++) {
             context.save();
             var data = toolData.data[i];
-            if (pointNearTool(data, cornerstoneTools.activeToolcoordinate.getCoords())) {
-               color = cornerstoneTools.activeToolcoordinate.getActiveColor();
+
+            //differentiate the color of activation tool
+            if (data.active) {
+                color = cornerstoneTools.toolColors.getActiveColor();
             } else {
-               color = cornerstoneTools.activeToolcoordinate.getToolColor();
+                color = cornerstoneTools.toolColors.getToolColor();
             }
 
-            var x1 = data.handles.start.x,
-                y1 = data.handles.start.y,
-                x2 = data.handles.end.x,
-                y2 = data.handles.end.y;
+            // draw the line
+            var handleStartCanvas = cornerstone.pixelToCanvas(eventData.element, data.handles.start);
+            var handleEndCanvas = cornerstone.pixelToCanvas(eventData.element, data.handles.end);
+
+            var x1 = handleStartCanvas.x,
+                y1 = handleStartCanvas.y,
+                x2 = handleEndCanvas.x,
+                y2 = handleEndCanvas.y;
+
          
             // draw the line
             context.beginPath();
             context.strokeStyle = color;
-            context.lineWidth = 1 / eventData.viewport.scale;
+            context.lineWidth = cornerstoneTools.toolStyle.getToolWidth();
             context.moveTo(x1, y1);
             context.lineTo(x2, y2);
             context.stroke();
@@ -104,14 +112,12 @@ var cornerstoneTools = (function ($, cornerstone, cornerstoneMath, cornerstoneTo
             endRadians += ((x2 >= x1) ? 90 : -90) * Math.PI / 180;*/
 
             var startRadians=Math.atan((y2-y1)/(x2-x1));
-            startRadians+=((x2>x1)?-90:90)*Math.PI/180;
+            startRadians+=((x2>=x1)?-90:90)*Math.PI/180;
 
             drawArrowhead(context, x1, y1, startRadians);
 
             // draw the handles
-            context.beginPath();
             cornerstoneTools.drawHandles(context, eventData, data.handles,color);
-            context.stroke();
 
             context.restore();
         }

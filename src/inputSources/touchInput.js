@@ -12,6 +12,8 @@ var cornerstoneTools = (function($, cornerstone, cornerstoneMath, cornerstoneToo
         lastRotation = 0.0,
         startPoints,
         lastPoints,
+        currentPoints,
+        deltaPoints,
         eventData;
     
 
@@ -112,14 +114,16 @@ var cornerstoneTools = (function($, cornerstone, cornerstoneMath, cornerstoneToo
                 break;
 
             case 'panend':
-                var currentPoints = {
+
+            
+                currentPoints = {
                     page: cornerstoneMath.point.pageToPoint(e.pointers[0]),
                     image: cornerstone.pageToPixel(element, e.pointers[0].pageX, e.pointers[0].pageY),
                     client: {x: e.pointers[0].clientX, y: e.pointers[0].clientY}
                 };
 
                 // Calculate delta values in page and image coordinates
-                var deltaPoints = {
+                deltaPoints = {
                     page: cornerstoneMath.point.subtract(currentPoints.page, lastPoints.page),
                     image: cornerstoneMath.point.subtract(currentPoints.image, lastPoints.image)
                 };

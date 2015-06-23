@@ -131,7 +131,7 @@ var cornerstoneTools = (function ($, cornerstone, cornerstoneTools) {
             }
             
             // Load and cache the image
-            var loadImageDeferred = cornerstone.loadAndCacheImage(imageId);
+            var loadImageDeferred = cornerstone.loadAndCacheImage(imageId, element);
 
             // When this is complete, remove the imageIdIndex from the list
             loadImageDeferred.done(function() {
