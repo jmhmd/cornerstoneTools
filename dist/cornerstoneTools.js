@@ -1,4 +1,4 @@
-/*! cornerstoneTools - v0.6.0 - 2015-04-16 | (c) 2014 Chris Hafey | https://github.com/chafey/cornerstoneTools */
+/*! cornerstoneTools - v0.6.0 - 2015-06-22 | (c) 2014 Chris Hafey | https://github.com/chafey/cornerstoneTools */
 // Begin Source: src/inputSources/mouseWheelInput.js
 var cornerstoneTools = (function ($, cornerstone, cornerstoneTools) {
 
@@ -3313,6 +3313,11 @@ var cornerstoneTools = (function ($, cornerstone, cornerstoneTools) {
 
         var targetImagePlane = cornerstoneTools.metaData.get('imagePlane', targetImage.imageId);
         var referenceImagePlane = cornerstoneTools.metaData.get('imagePlane', referenceImage.imageId);
+
+        // make sure image planes exist
+        if(!targetImagePlane || !referenceImagePlane) {
+            return;
+        }
 
         // the image planes must be in the same frame of reference
         if(targetImagePlane.frameOfReferenceUID != referenceImagePlane.frameOfReferenceUID) {

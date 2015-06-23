@@ -23,6 +23,11 @@ var cornerstoneTools = (function ($, cornerstone, cornerstoneTools) {
         var targetImagePlane = cornerstoneTools.metaData.get('imagePlane', targetImage.imageId);
         var referenceImagePlane = cornerstoneTools.metaData.get('imagePlane', referenceImage.imageId);
 
+        // make sure image planes exist
+        if(!targetImagePlane || !referenceImagePlane) {
+            return;
+        }
+
         // the image planes must be in the same frame of reference
         if(targetImagePlane.frameOfReferenceUID != referenceImagePlane.frameOfReferenceUID) {
             return;
