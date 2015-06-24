@@ -115,7 +115,12 @@ var cornerstoneTools = (function($, cornerstone, cornerstoneMath, cornerstoneToo
 
             case 'panend':
 
-            
+                // On OSX Chrome with touchpad, click + drag causes 'panend' to fire in isolation,
+                // not sure if this is a hammerjs problem or my problem
+                if (!lastPoints){
+                    return false;
+                }
+
                 currentPoints = {
                     page: cornerstoneMath.point.pageToPoint(e.pointers[0]),
                     image: cornerstone.pageToPixel(element, e.pointers[0].pageX, e.pointers[0].pageY),
