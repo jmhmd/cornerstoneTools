@@ -426,7 +426,12 @@ var cornerstoneTools = (function($, cornerstone, cornerstoneMath, cornerstoneToo
 
             case 'panend':
 
-            
+                // On OSX Chrome with touchpad, click + drag causes 'panend' to fire in isolation,
+                // not sure if this is a hammerjs problem or my problem
+                if (!lastPoints){
+                    return false;
+                }
+
                 currentPoints = {
                     page: cornerstoneMath.point.pageToPoint(e.pointers[0]),
                     image: cornerstone.pageToPixel(element, e.pointers[0].pageX, e.pointers[0].pageY),
@@ -2198,8 +2203,6 @@ var cornerstoneTools = (function ($, cornerstone, cornerstoneMath, cornerstoneTo
         }
 
         // we have tool data for this element - iterate over each one and draw it
-        /*var context = eventData.canvasContext.canvas.getContext("2d");
-        cornerstone.setToPixelCoordinateSystem(eventData.enabledElement, context);*/
         var context = eventData.canvasContext.canvas.getContext("2d");
         context.setTransform(1, 0, 0, 1, 0, 0);
         
@@ -2215,11 +2218,6 @@ var cornerstoneTools = (function ($, cornerstone, cornerstoneMath, cornerstoneTo
             } else {
                 color = cornerstoneTools.toolColors.getToolColor();
             }
-            /*if (pointNearTool(data, cornerstoneTools.activeToolcoordinate.getCoords())) {
-               color = cornerstoneTools.activeToolcoordinate.getActiveColor();
-            } else {
-               color = cornerstoneTools.activeToolcoordinate.getToolColor();
-            }*/
 
             // draw the line
             var handleStartCanvas = cornerstone.pixelToCanvas(eventData.element, data.handles.start);
@@ -2249,9 +2247,7 @@ var cornerstoneTools = (function ($, cornerstone, cornerstoneMath, cornerstoneTo
             drawArrowhead(context, x1, y1, startRadians);
 
             // draw the handles
-            // context.beginPath();
             cornerstoneTools.drawHandles(context, eventData, data.handles,color);
-            // context.stroke();
 
             context.restore();
         }
@@ -6594,11 +6590,11 @@ var cornerstoneTools = (function ($, cornerstone, cornerstoneTools) {
         var totalImages = stackData && stackData.imageIds.length;
 
         var prefetchData = cornerstoneTools.getToolState(eventData.element, 'stackPrefetch');
-        var imageLoadedIndex = prefetchData && prefetchData.data && prefetchData.data[0] && prefetchData.data[0].prefetchImageIdIndex;
+        var indicesToRequest = prefetchData && prefetchData.data && prefetchData.data[0] && prefetchData.data[0].indicesToRequest;
 
         // draw loaded images indicator
-        if (typeof imageLoadedIndex !== 'undefined'){
-            setLoadedMarker(context, width, height, imageLoadedIndex, totalImages);
+        if (typeof indicesToRequest !== 'undefined'){
+            setLoadedMarker(context, width, height, indicesToRequest, totalImages);
         }
 
         // draw current image cursor
@@ -6698,32 +6694,58 @@ var cornerstoneTools = (function ($, cornerstone, cornerstoneTools) {
         context.fillRect(xPos, height - scrollBarHeight, cursorWidth, scrollBarHeight);
     }
 
-    function setLoadedMarker(context, width, height, index, totalImages){
+    function setLoadedMarker(context, width, height, indicesToRequest, totalImages){
 
         var unitWidth = width / totalImages;
-        var markerWidth = unitWidth * (index + 1);
-        var xPos = 0;
 
         context.setTransform(1, 0, 0, 1, 0, 0);
 
-        context.fillStyle = 'rgb(44, 154, 255)';
-        context.fillRect(xPos, height - scrollBarHeight, markerWidth, scrollBarHeight);
+        for (var i=0; i<totalImages; i++){
+            // if image not in 'indicesToRequest', means it has loaded
+            if (indicesToRequest.indexOf(i) === -1){
+
+                var offset = unitWidth * i;
+
+                context.fillStyle = 'rgb(44, 154, 255)';
+                context.fillRect(offset, height - scrollBarHeight, unitWidth, scrollBarHeight);
+            }
+        }
+
+    }
+
+    function getImageIds(element){
+        var stackData = cornerstoneTools.getToolState(element, 'stack');
+        return stackData && stackData.data[0] && stackData.data[0].imageIds;
     }
 
     function deactivateScrollIndicator(element) {
 
         $(element).off("CornerstoneImageRendered", updateImage);
-        $(element).off("CornerstoneImageLoaded", updateImage);
+        $(cornerstone).off("CornerstoneImageLoaded", updateImage);
     }
 
     function activateScrollIndicator(element) {
 
-        /*$(element).off("CornerstoneImageRendered", updateImage);
-        $(element).off("CornerstoneImageLoaded", updateImage);*/
+        var imageIds = getImageIds(element),
+            enabledElement = cornerstone.getEnabledElement(element);
+
         deactivateScrollIndicator(element);
 
         $(element).on("CornerstoneImageRendered", updateImage);
-        $(element).on("CornerstoneImageLoaded", updateImage);
+
+        if (imageIds.length > 0){
+            $(cornerstone).on("CornerstoneImageLoaded", function(e, eventData){
+                var loadedIndex = imageIds.indexOf(eventData.image.imageId);
+
+                if (loadedIndex > -1){
+                    updateImage(e, {
+                        element: element,
+                        enabledElement: enabledElement,
+                        loadedIndex: loadedIndex
+                    });
+                }
+            });
+        }
     }
 
     function deactivateLoadingIndicator(element, instances) {
@@ -6892,11 +6914,13 @@ var cornerstoneTools = (function ($, cornerstone, cornerstoneTools) {
             var imagePromise = cornerstone.imageCache.getImagePromise(imageId);
             
             if(imagePromise !== undefined) {
-                return; // If we do, stop processing this iteration
+                // If we do, remove from list and stop processing this iteration
+                removeFromList(imageIdIndex);
+                return;
             }
             
             // Load and cache the image
-            var loadImageDeferred = cornerstone.loadAndCacheImage(imageId, element);
+            var loadImageDeferred = cornerstone.loadAndCacheImage(imageId);
 
             // When this is complete, remove the imageIdIndex from the list
             loadImageDeferred.done(function() {
