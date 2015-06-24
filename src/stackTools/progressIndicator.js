@@ -35,11 +35,11 @@ var cornerstoneTools = (function ($, cornerstone, cornerstoneTools) {
         var totalImages = stackData && stackData.imageIds.length;
 
         var prefetchData = cornerstoneTools.getToolState(eventData.element, 'stackPrefetch');
-        var imageLoadedIndex = prefetchData && prefetchData.data && prefetchData.data[0] && prefetchData.data[0].prefetchImageIdIndex;
+        var indicesToRequest = prefetchData && prefetchData.data && prefetchData.data[0] && prefetchData.data[0].indicesToRequest;
 
         // draw loaded images indicator
-        if (typeof imageLoadedIndex !== 'undefined'){
-            setLoadedMarker(context, width, height, imageLoadedIndex, totalImages);
+        if (typeof indicesToRequest !== 'undefined'){
+            setLoadedMarker(context, width, height, indicesToRequest, totalImages);
         }
 
         // draw current image cursor
@@ -139,32 +139,58 @@ var cornerstoneTools = (function ($, cornerstone, cornerstoneTools) {
         context.fillRect(xPos, height - scrollBarHeight, cursorWidth, scrollBarHeight);
     }
 
-    function setLoadedMarker(context, width, height, index, totalImages){
+    function setLoadedMarker(context, width, height, indicesToRequest, totalImages){
 
         var unitWidth = width / totalImages;
-        var markerWidth = unitWidth * (index + 1);
-        var xPos = 0;
 
         context.setTransform(1, 0, 0, 1, 0, 0);
 
-        context.fillStyle = 'rgb(44, 154, 255)';
-        context.fillRect(xPos, height - scrollBarHeight, markerWidth, scrollBarHeight);
+        for (var i=0; i<totalImages; i++){
+            // if image not in 'indicesToRequest', means it has loaded
+            if (indicesToRequest.indexOf(i) === -1){
+
+                var offset = unitWidth * i;
+
+                context.fillStyle = 'rgb(44, 154, 255)';
+                context.fillRect(offset, height - scrollBarHeight, unitWidth, scrollBarHeight);
+            }
+        }
+
+    }
+
+    function getImageIds(element){
+        var stackData = cornerstoneTools.getToolState(element, 'stack');
+        return stackData && stackData.data[0] && stackData.data[0].imageIds;
     }
 
     function deactivateScrollIndicator(element) {
 
         $(element).off("CornerstoneImageRendered", updateImage);
-        $(element).off("CornerstoneImageLoaded", updateImage);
+        $(cornerstone).off("CornerstoneImageLoaded", updateImage);
     }
 
     function activateScrollIndicator(element) {
 
-        /*$(element).off("CornerstoneImageRendered", updateImage);
-        $(element).off("CornerstoneImageLoaded", updateImage);*/
+        var imageIds = getImageIds(element),
+            enabledElement = cornerstone.getEnabledElement(element);
+
         deactivateScrollIndicator(element);
 
         $(element).on("CornerstoneImageRendered", updateImage);
-        $(element).on("CornerstoneImageLoaded", updateImage);
+
+        if (imageIds.length > 0){
+            $(cornerstone).on("CornerstoneImageLoaded", function(e, eventData){
+                var loadedIndex = imageIds.indexOf(eventData.image.imageId);
+
+                if (loadedIndex > -1){
+                    updateImage(e, {
+                        element: element,
+                        enabledElement: enabledElement,
+                        loadedIndex: loadedIndex
+                    });
+                }
+            });
+        }
     }
 
     function deactivateLoadingIndicator(element, instances) {
