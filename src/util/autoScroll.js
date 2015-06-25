@@ -44,19 +44,18 @@ var cornerstoneTools = (function ($, cornerstone, cornerstoneTools) {
         var stackData = cornerstoneTools.getToolState(element, 'stack').data[0];
         var currentImageIdIndex = stackData.currentImageIdIndex;
 
-        var targetInstance = parseInt(instance, 10) - 1; // use 0 indexed numbering
+        var targetInstance = parseInt(instance, 10) - 1; // switch to 0 indexed numbering
 
-        var ee = cornerstone.getEnabledElement(element);
+        /*var ee = cornerstone.getEnabledElement(element);
         if (ee.image){
             currentImageIdIndex = stackData.imageIds.indexOf(ee.image.imageId);
         }
         if (targetInstance === parseInt(currentImageIdIndex, 10)){
             return false;
-        }
+        }*/
 
         var goToInstance = function(instance) {
 
-            var viewport = cornerstone.getViewport(element);
             var imageId = stackData.imageIds[instance];
 
             if (!imageId){
@@ -64,30 +63,17 @@ var cornerstoneTools = (function ($, cornerstone, cornerstoneTools) {
                 return false;
             }
 
-            if (!viewport){
+            // stackData.currentImageIdIndex = instance;
 
-            }
+            var imagePromise = cornerstone.imageCache.getImagePromise(imageId);
 
-            stackData.currentImageIdIndex = instance;
-
-            var image = cornerstone.imageCache.getImagePromise(imageId);
-
-            if (image){
+            if (imagePromise && imagePromise.state() === "resolved" ||
+                instance === targetInstance){
                 // if image has already loaded and is cached, display it while scrolling through
-                image.then(function(image){
-                    cornerstone.displayImage(element, image);
-                });
+                cornerstoneTools.scrollToIndex(element, instance);
             } else {
-                // if image isn't cached, and this is the target image, load and cache it
-                if (stackData.currentImageIdIndex === targetInstance) {
-
-                    cornerstone.loadAndCacheImage(imageId, element).then(function(image) {
-                        cornerstone.displayImage(element, image);
-                    });
-                } else {
                 // otherwise, just skip the image to make it faster to autoscroll
-                    return false;
-                }
+                return false;
             }
 
         };
