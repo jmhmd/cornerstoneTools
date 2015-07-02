@@ -110,12 +110,14 @@ var cornerstoneTools = (function ($, cornerstone, cornerstoneTools) {
         var stackLength = stack.imageIds.length;
         
         var lastImageIdIndexFetched = stackPrefetch.lastImageIdIndexFetched;
-        if (!lastImageIdIndexFetched) {
+        if (lastImageIdIndexFetched === undefined) {
             lastImageIdIndexFetched = currentImageIdIndex;
         }
 
         var maxImageIdIndex = lastImageIdIndexFetched + config.maxSimultaneousRequests;
-        if (maxImageIdIndex > stackLength) {
+        if (maxImageIdIndex >= stackLength) {
+            // at end of stack, maxImageIdIndex should always equal stackLength - 1,
+            // as image ids are zero based
             maxImageIdIndex = stackLength - 1;
         }
 
